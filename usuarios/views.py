@@ -28,3 +28,8 @@ class LogoutView(APIView):
             return Response({"mensaje": "Sesión cerrada correctamente."})
         except Exception:
             return Response({"error": "Token inválido."}, status=400)
+        
+class ListaUsuariosView(generics.ListAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
