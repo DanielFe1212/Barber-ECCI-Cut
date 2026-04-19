@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/auth';
+import { login as loginService } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
+  const {login} = useAuth();
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -19,8 +22,15 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(form);
-      navigate('/citas');
+      await loginService(form);
+      const perfil = await api.get('/usuarios/perfil/');
+      login(perfil.data);
+      // Redirigir según rol
+      if (perfil.data.rol === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/citas');
+      }
     } catch (err) {
       setError('Usuario o contraseña incorrectos.');
     } finally {
