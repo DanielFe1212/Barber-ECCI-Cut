@@ -29,10 +29,10 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => setUsuario(userData);
   const logout = () => {
-    setUsuario(null);
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-  };
+  setUsuario(null);
+  localStorage.removeItem('access');
+  localStorage.removeItem('refresh');
+};
 
   return (
     <AuthContext.Provider value={{ usuario, loading, login, logout }}>

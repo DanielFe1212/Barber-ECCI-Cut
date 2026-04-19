@@ -66,11 +66,18 @@ export default function Admin() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+    const refresh = localStorage.getItem('refresh');
+    await api.post('/usuarios/logout/', { refresh });
+  } catch (err) {
+    console.log('Error al cerrar sesión:', err);
+  } finally {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
     navigate('/login');
-  };
+  }
+};
 
   const estadoColor = (estado) => {
     if (estado === 'pendiente') return { bg: '#fff8e6', color: '#b8860b', border: '#f0d080' };
