@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Registro from './pages/Registro';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -7,6 +8,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/registro" />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/login" element= {<Login />} />
       </Routes>
     </BrowserRouter>
   );
