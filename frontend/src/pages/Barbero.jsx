@@ -2,29 +2,37 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function Admin() {
+export default function Barbero() {
   const navigate = useNavigate();
-  const [seccion, setSeccion] = useState('citas');
   const [citas, setCitas] = useState([]);
-  const [barberos, setBarberos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
+  const [horarios, setHorarios] = useState([]);
+  const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [mostrarFormBarbero, setMostrarFormBarbero] = useState(false);
-  const [formBarbero, setFormBarbero] = useState({ nombre: '', especialidad: '' });
+  const [seccion, setSeccion] = useState('agenda');
+  const [mostrarFormHorario, setMostrarFormHorario] = useState(false);
+  const [formHorario, setFormHorario] = useState({
+    fecha: '',
+    hora_inicio: '',
+    hora_fin: '',
+    disponible: true,
+  });
 
   useEffect(() => { cargarDatos(); }, []);
 
   const cargarDatos = async () => {
     try {
-      const [citasRes, barberosRes, usuariosRes] = await Promise.all([
+      const [perfilRes, citasRes, barberosRes] = await Promise.all([
+        api.get('/usuarios/perfil/'),
         api.get('/citas/'),
         api.get('/barberos/'),
-        api.get('/usuarios/'),
       ]);
+      setPerfil(perfilRes.data);
       setCitas(citasRes.data);
-      setBarberos(barberosRes.data);
-      setUsuarios(usuariosRes.data);
+      if (barberosRes.data.length > 0) {
+        const horariosRes = await api.get(`/horarios/?barbero=${barberosRes.data[0].id}`);
+        setHorarios(horariosRes.data);
+      }
     } catch (err) {
       setError('Error al cargar los datos.');
     } finally {
@@ -32,35 +40,28 @@ export default function Admin() {
     }
   };
 
-  const handleAgregarBarbero = async (e) => {
+  const handleAgregarHorario = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/barberos/', formBarbero);
-      setMostrarFormBarbero(false);
-      setFormBarbero({ nombre: '', especialidad: '' });
+      const barberosRes = await api.get('/barberos/');
+      await api.post('/horarios/', {
+        ...formHorario,
+        barbero: barberosRes.data[0].id,
+      });
+      setMostrarFormHorario(false);
+      setFormHorario({ fecha: '', hora_inicio: '', hora_fin: '', disponible: true });
       cargarDatos();
     } catch (err) {
-      setError('Error al agregar barbero.');
+      setError('Error al agregar horario.');
     }
   };
 
-  const handleEliminarBarbero = async (id) => {
-    if (!window.confirm('¿Eliminar este barbero?')) return;
+  const handleToggleDisponible = async (horario) => {
     try {
-      await api.delete(`/barberos/${id}/`);
+      await api.patch(`/horarios/${horario.id}/`, { disponible: !horario.disponible });
       cargarDatos();
     } catch (err) {
-      setError('Error al eliminar barbero.');
-    }
-  };
-
-  const handleCancelarCita = async (id) => {
-    if (!window.confirm('¿Cancelar esta cita?')) return;
-    try {
-      await api.post(`/citas/${id}/cancelar/`);
-      cargarDatos();
-    } catch (err) {
-      setError('Error al cancelar la cita.');
+      setError('Error al actualizar disponibilidad.');
     }
   };
 
@@ -90,18 +91,20 @@ export default function Admin() {
         <div style={s.navBrand}>
           <div style={s.navLogo}>✂</div>
           <span style={s.navTitle}>Barber Ecci Cut</span>
-          <span style={s.adminBadge}>Admin</span>
+          <span style={s.barberoBadge}>Barbero</span>
         </div>
-        <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
+        <div style={s.navRight}>
+          {perfil && <span style={s.navUser}>👤 {perfil.username}</span>}
+          <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
+        </div>
       </nav>
 
       <div style={s.layout}>
         {/* Sidebar */}
         <aside style={s.sidebar}>
           {[
-            { key: 'citas', label: '📅 Citas' },
-            { key: 'barberos', label: '✂ Barberos' },
-            { key: 'usuarios', label: '👤 Usuarios' },
+            { key: 'agenda', label: '📅 Mi agenda' },
+            { key: 'disponibilidad', label: '🕐 Disponibilidad' },
           ].map((item) => (
             <button
               key={item.key}
@@ -127,16 +130,15 @@ export default function Admin() {
             <p style={s.loading}>Cargando...</p>
           ) : (
             <>
-              {/* CITAS */}
-              {seccion === 'citas' && (
+              {/* AGENDA */}
+              {seccion === 'agenda' && (
                 <div>
-                  <h2 style={s.titulo}>Gestión de Citas</h2>
+                  <h2 style={s.titulo}>Mi Agenda</h2>
                   <div style={s.statsRow}>
                     {[
                       { num: citas.length, label: 'Total citas' },
                       { num: citas.filter(c => c.estado === 'pendiente').length, label: 'Pendientes' },
                       { num: citas.filter(c => c.estado === 'completada').length, label: 'Completadas' },
-                      { num: citas.filter(c => c.estado === 'cancelada').length, label: 'Canceladas' },
                     ].map((stat, i) => (
                       <div key={i} style={s.statCard}>
                         <p style={s.statNum}>{stat.num}</p>
@@ -144,120 +146,97 @@ export default function Admin() {
                       </div>
                     ))}
                   </div>
-                  <div style={s.tabla}>
-                    <div style={s.tablaHeader}>
-                      <span>Usuario</span>
-                      <span>Barbero</span>
-                      <span>Fecha</span>
-                      <span>Hora</span>
-                      <span>Estado</span>
-                      <span>Acción</span>
+
+                  {citas.length === 0 ? (
+                    <div style={s.empty}>
+                      <span style={s.emptyIcon}>📅</span>
+                      <p style={s.emptyText}>No tienes citas agendadas</p>
                     </div>
-                    {citas.map((cita) => {
-                      const col = estadoColor(cita.estado);
-                      return (
-                        <div key={cita.id} style={s.tablaFila}>
-                          <span style={s.tablaCell}>#{cita.usuario}</span>
-                          <span style={s.tablaCell}>{barberos.find(b => b.id === cita.barbero)?.nombre || '—'}</span>
-                          <span style={s.tablaCell}>{cita.fecha}</span>
-                          <span style={s.tablaCell}>{cita.hora}</span>
-                          <span>
+                  ) : (
+                    <div style={s.grid}>
+                      {citas.map((cita) => {
+                        const col = estadoColor(cita.estado);
+                        return (
+                          <div key={cita.id} style={s.card}>
+                            <div style={s.cardInfo}>
+                              <p style={s.cardCliente}>👤 Cliente #{cita.usuario}</p>
+                              <p style={s.cardFecha}>📅 {cita.fecha} — 🕐 {cita.hora}</p>
+                            </div>
                             <span style={{...s.badge, background: col.bg, color: col.color, border: `1px solid ${col.border}`}}>
                               {cita.estado}
                             </span>
-                          </span>
-                          <span>
-                            {cita.estado === 'pendiente' && (
-                              <button style={s.btnCancelar} onClick={() => handleCancelarCita(cita.id)}>
-                                Cancelar
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* BARBEROS */}
-              {seccion === 'barberos' && (
+              {/* DISPONIBILIDAD */}
+              {seccion === 'disponibilidad' && (
                 <div>
                   <div style={s.seccionHeader}>
-                    <h2 style={s.titulo}>Gestión de Barberos</h2>
-                    <button style={s.btnAgregar} onClick={() => setMostrarFormBarbero(true)}>
-                      + Agregar barbero
+                    <h2 style={s.titulo}>Mi Disponibilidad</h2>
+                    <button style={s.btnAgregar} onClick={() => setMostrarFormHorario(true)}>
+                      + Agregar horario
                     </button>
                   </div>
 
-                  {mostrarFormBarbero && (
+                  {mostrarFormHorario && (
                     <div style={s.formCard}>
-                      <h3 style={s.formTitulo}>Nuevo barbero</h3>
-                      <form onSubmit={handleAgregarBarbero} style={s.form}>
+                      <h3 style={s.formTitulo}>Nuevo horario</h3>
+                      <form onSubmit={handleAgregarHorario} style={s.form}>
                         <div style={s.formRow}>
                           <div style={s.inputGroup}>
-                            <label style={s.label}>Nombre</label>
-                            <input style={s.input} type="text" placeholder="Nombre del barbero" value={formBarbero.nombre} onChange={(e) => setFormBarbero({...formBarbero, nombre: e.target.value})} required />
+                            <label style={s.label}>Fecha</label>
+                            <input style={s.input} type="date" value={formHorario.fecha} onChange={(e) => setFormHorario({...formHorario, fecha: e.target.value})} required />
                           </div>
                           <div style={s.inputGroup}>
-                            <label style={s.label}>Especialidad</label>
-                            <input style={s.input} type="text" placeholder="Ej: Corte clásico" value={formBarbero.especialidad} onChange={(e) => setFormBarbero({...formBarbero, especialidad: e.target.value})} required />
+                            <label style={s.label}>Hora inicio</label>
+                            <input style={s.input} type="time" value={formHorario.hora_inicio} onChange={(e) => setFormHorario({...formHorario, hora_inicio: e.target.value})} required />
+                          </div>
+                          <div style={s.inputGroup}>
+                            <label style={s.label}>Hora fin</label>
+                            <input style={s.input} type="time" value={formHorario.hora_fin} onChange={(e) => setFormHorario({...formHorario, hora_fin: e.target.value})} required />
                           </div>
                         </div>
                         <div style={s.formBotones}>
-                          <button type="button" style={s.btnCancelarModal} onClick={() => setMostrarFormBarbero(false)}>Cancelar</button>
-                          <button type="submit" style={s.btnConfirmar}>Guardar barbero</button>
+                          <button type="button" style={s.btnCancelarModal} onClick={() => setMostrarFormHorario(false)}>Cancelar</button>
+                          <button type="submit" style={s.btnConfirmar}>Guardar horario</button>
                         </div>
                       </form>
                     </div>
                   )}
 
-                  <div style={s.grid}>
-                    {barberos.map((barbero) => (
-                      <div key={barbero.id} style={s.barberoCard}>
-                        <div style={s.barberoAvatar}>{barbero.nombre.charAt(0).toUpperCase()}</div>
-                        <div style={s.barberoInfo}>
-                          <p style={s.barberoNombre}>{barbero.nombre}</p>
-                          <p style={s.barberoEsp}>{barbero.especialidad}</p>
-                        </div>
-                        <button style={s.btnEliminar} onClick={() => handleEliminarBarbero(barbero.id)}>
-                          Eliminar
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* USUARIOS */}
-              {seccion === 'usuarios' && (
-                <div>
-                  <h2 style={s.titulo}>Gestión de Usuarios</h2>
-                  <div style={s.tabla}>
-                    <div style={{...s.tablaHeader, gridTemplateColumns: 'repeat(4, 1fr)'}}>
-                      <span>ID</span>
-                      <span>Usuario</span>
-                      <span>Email</span>
-                      <span>Rol</span>
+                  {horarios.length === 0 ? (
+                    <div style={s.empty}>
+                      <span style={s.emptyIcon}>🕐</span>
+                      <p style={s.emptyText}>No tienes horarios registrados</p>
                     </div>
-                    {usuarios.map((usuario) => (
-                      <div key={usuario.id} style={{...s.tablaFila, gridTemplateColumns: 'repeat(4, 1fr)'}}>
-                        <span style={s.tablaCell}>#{usuario.id}</span>
-                        <span style={s.tablaCell}>{usuario.username}</span>
-                        <span style={s.tablaCell}>{usuario.email}</span>
-                        <span>
-                          <span style={{
-                            ...s.badge,
-                            background: usuario.rol === 'admin' ? 'rgba(100,150,255,0.2)' : usuario.rol === 'barbero' ? 'rgba(100,255,180,0.2)' : 'rgba(255,255,255,0.1)',
-                            color: usuario.rol === 'admin' ? '#aac4ff' : usuario.rol === 'barbero' ? '#6fffc0' : 'rgba(255,255,255,0.7)',
-                            border: usuario.rol === 'admin' ? '1px solid rgba(100,150,255,0.4)' : usuario.rol === 'barbero' ? '1px solid rgba(100,255,180,0.4)' : '1px solid rgba(255,255,255,0.2)',
-                          }}>
-                            {usuario.rol}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  ) : (
+                    <div style={s.grid}>
+                      {horarios.map((horario) => (
+                        <div key={horario.id} style={s.card}>
+                          <div style={s.cardInfo}>
+                            <p style={s.cardCliente}>📅 {horario.fecha}</p>
+                            <p style={s.cardFecha}>🕐 {horario.hora_inicio} — {horario.hora_fin}</p>
+                          </div>
+                          <button
+                            style={{
+                              ...s.btnToggle,
+                              background: horario.disponible ? 'rgba(100,255,180,0.2)' : 'rgba(255,100,100,0.15)',
+                              color: horario.disponible ? '#6fffc0' : '#ffaaaa',
+                              border: horario.disponible ? '1px solid rgba(100,255,180,0.4)' : '1px solid rgba(255,100,100,0.35)',
+                            }}
+                            onClick={() => handleToggleDisponible(horario)}
+                          >
+                            {horario.disponible ? '✓ Disponible' : '✗ No disponible'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -303,14 +282,24 @@ const s = {
     fontSize: '20px',
     fontWeight: '800',
   },
-  adminBadge: {
-    background: 'rgba(255,255,255,0.2)',
+  barberoBadge: {
+    background: 'rgba(255,255,255,0.15)',
     border: '1px solid rgba(255,255,255,0.35)',
     color: '#fff',
     fontSize: '11px',
     fontWeight: '700',
     padding: '3px 12px',
     borderRadius: '20px',
+  },
+  navRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  navUser: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: '14px',
+    fontWeight: '600',
   },
   btnLogout: {
     padding: '9px 20px',
@@ -348,7 +337,6 @@ const s = {
   main: {
     flex: 1,
     padding: '32px',
-    overflowY: 'auto',
   },
   errorBox: {
     background: 'rgba(255,80,80,0.2)',
@@ -372,7 +360,7 @@ const s = {
   },
   statsRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '14px',
     marginBottom: '28px',
   },
@@ -389,59 +377,54 @@ const s = {
     fontWeight: '800',
     color: '#fff',
     margin: '0 0 4px',
-    textShadow: '0 2px 8px rgba(0,0,0,0.15)',
   },
   statLabel: {
     fontSize: '13px',
     color: 'rgba(255,255,255,0.65)',
     margin: 0,
   },
-  tabla: {
-    background: 'rgba(255,255,255,0.08)',
+  empty: {
+    textAlign: 'center',
+    marginTop: '60px',
+  },
+  emptyIcon: { fontSize: '48px' },
+  emptyText: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: '16px',
+    margin: '12px 0',
+  },
+  grid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  card: {
+    background: 'rgba(255,255,255,0.1)',
     backdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: '16px',
-    overflow: 'hidden',
-  },
-  tablaHeader: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(6, 1fr)',
-    padding: '14px 20px',
-    background: 'rgba(255,255,255,0.08)',
-    fontSize: '12px',
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.5)',
-    borderBottom: '1px solid rgba(255,255,255,0.1)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  tablaFila: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(6, 1fr)',
-    padding: '14px 20px',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: '14px',
+    padding: '16px 20px',
+    display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    fontSize: '14px',
   },
-  tablaCell: {
-    color: 'rgba(255,255,255,0.85)',
+  cardInfo: { flex: 1 },
+  cardCliente: {
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#fff',
+    margin: '0 0 4px',
+  },
+  cardFecha: {
+    fontSize: '13px',
+    color: 'rgba(255,255,255,0.6)',
+    margin: 0,
   },
   badge: {
-    padding: '4px 12px',
+    padding: '6px 14px',
     borderRadius: '20px',
     fontSize: '12px',
     fontWeight: '700',
-  },
-  btnCancelar: {
-    padding: '6px 14px',
-    background: 'rgba(255,100,100,0.15)',
-    border: '1px solid rgba(255,100,100,0.35)',
-    borderRadius: '8px',
-    color: '#ffaaaa',
-    fontSize: '12px',
-    cursor: 'pointer',
-    fontFamily: "'Nunito', sans-serif",
-    fontWeight: '600',
   },
   seccionHeader: {
     display: 'flex',
@@ -475,7 +458,7 @@ const s = {
     margin: '0 0 16px',
   },
   form: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  formRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
+  formRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
   label: { fontSize: '13px', fontWeight: '700', color: 'rgba(255,255,255,0.85)' },
   input: {
@@ -511,43 +494,12 @@ const s = {
     cursor: 'pointer',
     fontFamily: "'Nunito', sans-serif",
   },
-  grid: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  barberoCard: {
-    background: 'rgba(255,255,255,0.1)',
-    backdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: '14px',
-    padding: '16px 20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  barberoAvatar: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '50%',
-    background: 'rgba(255,255,255,0.2)',
-    border: '1px solid rgba(255,255,255,0.35)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '18px',
-    fontWeight: '800',
-    color: '#fff',
-    flexShrink: 0,
-  },
-  barberoInfo: { flex: 1 },
-  barberoNombre: { fontSize: '15px', fontWeight: '700', color: '#fff', margin: '0 0 4px' },
-  barberoEsp: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: 0 },
-  btnEliminar: {
-    padding: '8px 16px',
-    background: 'rgba(255,100,100,0.15)',
-    border: '1px solid rgba(255,100,100,0.35)',
-    borderRadius: '10px',
-    color: '#ffaaaa',
-    fontSize: '13px',
+  btnToggle: {
+    padding: '8px 18px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '700',
     cursor: 'pointer',
     fontFamily: "'Nunito', sans-serif",
-    fontWeight: '600',
   },
 };

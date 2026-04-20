@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Usuario
 from .serializers import UsuarioSerializer, RegistroSerializer
+from .permissions import EsAdmin
 
 class RegistroView(generics.CreateAPIView):
     queryset = Usuario.objects.all()
@@ -28,8 +29,8 @@ class LogoutView(APIView):
             return Response({"mensaje": "Sesión cerrada correctamente."})
         except Exception:
             return Response({"error": "Token inválido."}, status=400)
-        
+
 class ListaUsuariosView(generics.ListAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsAdmin]  # ← solo admins pueden ver usuarios

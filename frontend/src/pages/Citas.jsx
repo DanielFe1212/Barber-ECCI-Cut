@@ -9,15 +9,9 @@ export default function Citas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState({
-    barbero: '',
-    fecha: '',
-    hora: '',
-  });
+  const [form, setForm] = useState({ barbero: '', fecha: '', hora: '' });
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+  useEffect(() => { cargarDatos(); }, []);
 
   const cargarDatos = async () => {
     try {
@@ -32,10 +26,6 @@ export default function Citas() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleAgendar = async (e) => {
@@ -61,157 +51,103 @@ export default function Citas() {
   };
 
   const handleLogout = async () => {
-  try {
-    const refresh = localStorage.getItem('refresh');
-    await api.post('/usuarios/logout/', { refresh });
-  } catch (err) {
-    console.log('Error al cerrar sesión:', err);
-  } finally {
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-    navigate('/login');
-  }
-};
+    try {
+      const refresh = localStorage.getItem('refresh');
+      await api.post('/usuarios/logout/', { refresh });
+    } catch (err) {
+      console.log('Error al cerrar sesión:', err);
+    } finally {
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      navigate('/login');
+    }
+  };
 
   const estadoColor = (estado) => {
-    if (estado === 'pendiente') return { bg: '#fff8e6', color: '#b8860b', border: '#f0d080' };
-    if (estado === 'completada') return { bg: '#e6f9f0', color: '#1a7a4a', border: '#80dba8' };
-    return { bg: '#fef0f0', color: '#cc3333', border: '#f0a0a0' };
+    if (estado === 'pendiente') return { bg: 'rgba(255,220,100,0.2)', color: '#ffe066', border: 'rgba(255,220,100,0.4)' };
+    if (estado === 'completada') return { bg: 'rgba(100,255,180,0.2)', color: '#6fffc0', border: 'rgba(100,255,180,0.4)' };
+    return { bg: 'rgba(255,100,100,0.2)', color: '#ffaaaa', border: 'rgba(255,100,100,0.4)' };
   };
 
   return (
-    <div style={styles.page}>
+    <div style={s.page}>
       {/* Navbar */}
-      <nav style={styles.navbar}>
-        <div style={styles.navBrand}>
-          <span style={styles.navLogo}>✂</span>
-          <span style={styles.navTitle}>Barber Ecci Cut</span>
+      <nav style={s.navbar}>
+        <div style={s.navBrand}>
+          <div style={s.navLogo}>✂</div>
+          <span style={s.navTitle}>Barber Ecci Cut</span>
         </div>
-        <div style={styles.navActions}>
-          <button style={styles.btnAgendar} onClick={() => setMostrarForm(true)}>
-            + Nueva cita
-          </button>
-          <button style={styles.btnLogout} onClick={handleLogout}>
-            Cerrar sesión
-          </button>
+        <div style={s.navActions}>
+          <button style={s.btnNueva} onClick={() => setMostrarForm(true)}>+ Nueva cita</button>
+          <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
         </div>
       </nav>
 
-      {/* Contenido */}
-      <div style={styles.contenido}>
-        <h2 style={styles.titulo}>Mis citas</h2>
+      <div style={s.contenido}>
+        <h2 style={s.titulo}>Mis citas</h2>
 
-        {error && (
-          <div style={styles.errorBox}>⚠ {error}</div>
-        )}
+        {error && <div style={s.errorBox}>⚠ {error}</div>}
 
         {/* Modal agendar */}
         {mostrarForm && (
-          <div style={styles.modalOverlay}>
-            <div style={styles.modal}>
-              <h3 style={styles.modalTitulo}>Agendar nueva cita</h3>
-
-              <form onSubmit={handleAgendar} style={styles.form}>
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Barbero</label>
-                  <select
-                    style={styles.input}
-                    name="barbero"
-                    value={form.barbero}
-                    onChange={handleChange}
-                    required
-                  >
+          <div style={s.modalOverlay}>
+            <div style={s.modal}>
+              <h3 style={s.modalTitulo}>Agendar nueva cita</h3>
+              <form onSubmit={handleAgendar} style={s.form}>
+                <div style={s.inputGroup}>
+                  <label style={s.label}>Barbero</label>
+                  <select style={s.input} name="barbero" value={form.barbero} onChange={(e) => setForm({...form, barbero: e.target.value})} required>
                     <option value="">Selecciona un barbero</option>
                     {barberos.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.nombre} — {b.especialidad}
-                      </option>
+                      <option key={b.id} value={b.id}>{b.nombre} — {b.especialidad}</option>
                     ))}
                   </select>
                 </div>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Fecha</label>
-                  <input
-                    style={styles.input}
-                    type="date"
-                    name="fecha"
-                    value={form.fecha}
-                    onChange={handleChange}
-                    required
-                  />
+                <div style={s.inputGroup}>
+                  <label style={s.label}>Fecha</label>
+                  <input style={s.input} type="date" value={form.fecha} onChange={(e) => setForm({...form, fecha: e.target.value})} required />
                 </div>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Hora</label>
-                  <input
-                    style={styles.input}
-                    type="time"
-                    name="hora"
-                    value={form.hora}
-                    onChange={handleChange}
-                    required
-                  />
+                <div style={s.inputGroup}>
+                  <label style={s.label}>Hora</label>
+                  <input style={s.input} type="time" value={form.hora} onChange={(e) => setForm({...form, hora: e.target.value})} required />
                 </div>
-
-                <div style={styles.modalBotones}>
-                  <button
-                    type="button"
-                    style={styles.btnCancelarModal}
-                    onClick={() => setMostrarForm(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" style={styles.btnConfirmar}>
-                    Confirmar cita
-                  </button>
+                <div style={s.modalBotones}>
+                  <button type="button" style={s.btnCancelarModal} onClick={() => setMostrarForm(false)}>Cancelar</button>
+                  <button type="submit" style={s.btnConfirmar}>Confirmar cita</button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* Lista de citas */}
+        {/* Lista */}
         {loading ? (
-          <p style={styles.loading}>Cargando citas...</p>
+          <p style={s.loading}>Cargando citas...</p>
         ) : citas.length === 0 ? (
-          <div style={styles.empty}>
-            <span style={styles.emptyIcon}>📅</span>
-            <p style={styles.emptyText}>No tienes citas agendadas</p>
-            <button style={styles.btnAgendarEmpty} onClick={() => setMostrarForm(true)}>
+          <div style={s.empty}>
+            <span style={s.emptyIcon}>📅</span>
+            <p style={s.emptyText}>No tienes citas agendadas</p>
+            <button style={s.btnAgendarEmpty} onClick={() => setMostrarForm(true)}>
               Agendar mi primera cita
             </button>
           </div>
         ) : (
-          <div style={styles.grid}>
+          <div style={s.grid}>
             {citas.map((cita) => {
               const colores = estadoColor(cita.estado);
               return (
-                <div key={cita.id} style={styles.card}>
-                  <div style={styles.cardHeader}>
+                <div key={cita.id} style={s.card}>
+                  <div style={s.cardHeader}>
                     <div>
-                      <p style={styles.cardBarbero}>
-                        ✂ {barberos.find(b => b.id === cita.barbero)?.nombre || 'Barbero'}
-                      </p>
-                      <p style={styles.cardFecha}>
-                        📅 {cita.fecha} — 🕐 {cita.hora}
-                      </p>
+                      <p style={s.cardBarbero}>✂ {barberos.find(b => b.id === cita.barbero)?.nombre || 'Barbero'}</p>
+                      <p style={s.cardFecha}>📅 {cita.fecha} — 🕐 {cita.hora}</p>
                     </div>
-                    <span style={{
-                      ...styles.badge,
-                      background: colores.bg,
-                      color: colores.color,
-                      border: `1px solid ${colores.border}`,
-                    }}>
+                    <span style={{...s.badge, background: colores.bg, color: colores.color, border: `1px solid ${colores.border}`}}>
                       {cita.estado}
                     </span>
                   </div>
-
                   {cita.estado === 'pendiente' && (
-                    <button
-                      style={styles.btnCancelarCita}
-                      onClick={() => handleCancelar(cita.id)}
-                    >
+                    <button style={s.btnCancelarCita} onClick={() => handleCancelar(cita.id)}>
                       Cancelar cita
                     </button>
                   )}
@@ -225,19 +161,19 @@ export default function Citas() {
   );
 }
 
-const styles = {
+const s = {
   page: {
     minHeight: '100vh',
-    background: '#f5f5f0',
-    fontFamily: "'Segoe UI', sans-serif",
+    fontFamily: "'Nunito', sans-serif",
   },
   navbar: {
-    background: '#1a1a1a',
-    padding: '16px 32px',
+    background: 'rgba(255,255,255,0.1)',
+    backdropFilter: 'blur(20px)',
+    borderBottom: '1px solid rgba(255,255,255,0.2)',
+    padding: '14px 32px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
   },
   navBrand: {
     display: 'flex',
@@ -245,36 +181,46 @@ const styles = {
     gap: '12px',
   },
   navLogo: {
-    fontSize: '24px',
+    width: '38px',
+    height: '38px',
+    background: 'rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.35)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px',
   },
   navTitle: {
-    color: '#c8a96e',
+    color: '#fff',
     fontSize: '20px',
-    fontWeight: '700',
-    letterSpacing: '0.5px',
+    fontWeight: '800',
+    textShadow: '0 1px 8px rgba(0,0,0,0.15)',
   },
   navActions: {
     display: 'flex',
     gap: '12px',
   },
-  btnAgendar: {
-    padding: '10px 20px',
-    background: '#c8a96e',
-    color: '#1a1a1a',
+  btnNueva: {
+    padding: '9px 20px',
+    background: 'rgba(255,255,255,0.9)',
+    color: '#0a4f7a',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '20px',
     fontSize: '14px',
-    fontWeight: '700',
+    fontWeight: '800',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
   },
   btnLogout: {
-    padding: '10px 20px',
-    background: 'transparent',
-    color: '#aaa',
-    border: '1px solid #444',
-    borderRadius: '8px',
+    padding: '9px 20px',
+    background: 'rgba(255,255,255,0.1)',
+    color: 'rgba(255,255,255,0.8)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    borderRadius: '20px',
     fontSize: '14px',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
   },
   contenido: {
     maxWidth: '900px',
@@ -282,32 +228,36 @@ const styles = {
     padding: '40px 24px',
   },
   titulo: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: '24px',
+    fontSize: '30px',
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: '28px',
+    textShadow: '0 2px 10px rgba(0,0,0,0.15)',
   },
   errorBox: {
-    background: '#fff0f0',
-    border: '1px solid #ffcccc',
-    borderRadius: '8px',
+    background: 'rgba(255,80,80,0.2)',
+    border: '1px solid rgba(255,100,100,0.4)',
+    borderRadius: '12px',
     padding: '12px 16px',
     marginBottom: '20px',
-    color: '#cc3333',
+    color: '#ffcccc',
     fontSize: '14px',
   },
   modalOverlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
+    background: 'rgba(0,0,0,0.4)',
+    backdropFilter: 'blur(6px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
   },
   modal: {
-    background: '#fff',
-    borderRadius: '16px',
+    background: 'rgba(255,255,255,0.15)',
+    backdropFilter: 'blur(24px)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    borderRadius: '24px',
     padding: '40px',
     width: '100%',
     maxWidth: '440px',
@@ -315,14 +265,14 @@ const styles = {
   },
   modalTitulo: {
     fontSize: '22px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '0 0 24px 0',
+    fontWeight: '800',
+    color: '#fff',
+    margin: '0 0 24px',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '18px',
+    gap: '16px',
   },
   inputGroup: {
     display: 'flex',
@@ -331,17 +281,19 @@ const styles = {
   },
   label: {
     fontSize: '13px',
-    fontWeight: '600',
-    color: '#444',
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.85)',
   },
   input: {
     padding: '12px 16px',
-    borderRadius: '10px',
-    border: '1.5px solid #e0e0e0',
+    borderRadius: '12px',
+    border: '1px solid rgba(255,255,255,0.3)',
+    background: 'rgba(255,255,255,0.15)',
+    backdropFilter: 'blur(8px)',
+    color: '#fff',
     fontSize: '15px',
-    color: '#1a1a1a',
-    background: '#fafafa',
     outline: 'none',
+    fontFamily: "'Nunito', sans-serif",
   },
   modalBotones: {
     display: 'flex',
@@ -351,62 +303,64 @@ const styles = {
   btnCancelarModal: {
     flex: 1,
     padding: '12px',
-    background: 'transparent',
-    border: '1.5px solid #e0e0e0',
-    borderRadius: '10px',
+    background: 'rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    borderRadius: '12px',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: '15px',
-    color: '#666',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
   },
   btnConfirmar: {
     flex: 1,
     padding: '12px',
-    background: '#c8a96e',
+    background: 'rgba(255,255,255,0.9)',
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '12px',
+    color: '#0a4f7a',
     fontSize: '15px',
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontWeight: '800',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
   },
   loading: {
-    color: '#888',
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
     marginTop: '60px',
+    fontSize: '16px',
   },
   empty: {
     textAlign: 'center',
     marginTop: '80px',
   },
-  emptyIcon: {
-    fontSize: '48px',
-  },
+  emptyIcon: { fontSize: '52px' },
   emptyText: {
-    color: '#888',
+    color: 'rgba(255,255,255,0.7)',
     fontSize: '16px',
     margin: '12px 0 24px',
   },
   btnAgendarEmpty: {
-    padding: '12px 24px',
-    background: '#c8a96e',
-    color: '#1a1a1a',
+    padding: '12px 28px',
+    background: 'rgba(255,255,255,0.9)',
+    color: '#0a4f7a',
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '20px',
     fontSize: '15px',
-    fontWeight: '700',
+    fontWeight: '800',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
   },
   grid: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
+    gap: '14px',
   },
   card: {
-    background: '#fff',
-    borderRadius: '12px',
+    background: 'rgba(255,255,255,0.12)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: '16px',
     padding: '20px 24px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-    border: '1px solid #eee',
   },
   cardHeader: {
     display: 'flex',
@@ -416,29 +370,30 @@ const styles = {
   cardBarbero: {
     fontSize: '16px',
     fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '0 0 6px 0',
+    color: '#fff',
+    margin: '0 0 6px',
   },
   cardFecha: {
     fontSize: '14px',
-    color: '#666',
+    color: 'rgba(255,255,255,0.65)',
     margin: 0,
   },
   badge: {
     padding: '6px 14px',
     borderRadius: '20px',
     fontSize: '12px',
-    fontWeight: '600',
-    textTransform: 'capitalize',
+    fontWeight: '700',
   },
   btnCancelarCita: {
     marginTop: '16px',
-    padding: '8px 16px',
-    background: 'transparent',
-    border: '1px solid #ffcccc',
-    borderRadius: '8px',
-    color: '#cc3333',
+    padding: '8px 18px',
+    background: 'rgba(255,100,100,0.15)',
+    border: '1px solid rgba(255,100,100,0.35)',
+    borderRadius: '10px',
+    color: '#ffaaaa',
     fontSize: '13px',
     cursor: 'pointer',
+    fontFamily: "'Nunito', sans-serif",
+    fontWeight: '600',
   },
 };

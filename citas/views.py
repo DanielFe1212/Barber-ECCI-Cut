@@ -3,15 +3,24 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Cita
 from .serializers import CitaSerializer
+from usuarios.permissions import EsAdmin, EsAdminOCliente
 
 class CitaViewSet(viewsets.ModelViewSet):
     serializer_class = CitaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [EsAdminOCliente()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [EsAdmin()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
         if user.rol == 'admin':
             return Cita.objects.all()
+        if user.rol == 'barbero':
+            return Cita.objects.filter(barbero__nombre=user.username)
         return Cita.objects.filter(usuario=user)
 
     def perform_create(self, serializer):
