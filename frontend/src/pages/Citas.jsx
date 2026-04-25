@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import Toast from '../components/Toast';
+import useToast from '../hooks/useToast';
 
 export default function Citas() {
   const navigate = useNavigate();
@@ -10,6 +12,7 @@ export default function Citas() {
   const [error, setError] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
   const [perfil, setPerfil] = useState(null);
+  const { toast, mostrarToast, cerrarToast } = useToast();
   const [form, setForm] = useState({ barbero: '', fecha: '', hora: '' });
 
   useEffect(() => { cargarDatos(); }, []);
@@ -38,8 +41,9 @@ export default function Citas() {
       setMostrarForm(false);
       setForm({ barbero: '', fecha: '', hora: '' });
       cargarDatos();
+      mostrarToast('Cita agendada correctamente')
     } catch (err) {
-      setError('Error al agendar la cita. El horario puede estar ocupado.');
+      mostrarToast('El horario ya esta ocupado.');
     }
   };
 
@@ -48,8 +52,9 @@ export default function Citas() {
     try {
       await api.post(`/citas/${id}/cancelar/`);
       cargarDatos();
+      mostrarToast('Cita cancelada correctamente.')
     } catch (err) {
-      setError('Error al cancelar la cita.');
+      mostrarToast('Error al cancelar la cita.');
     }
   };
 
@@ -168,6 +173,7 @@ export default function Citas() {
           </div>
         )}
       </div>
+     {toast && <Toast mensaje={toast.mensaje} tipo={toast.tipo} onClose={cerrarToast} />}
     </div>
   );
 }
