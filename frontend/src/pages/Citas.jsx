@@ -9,24 +9,27 @@ export default function Citas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [perfil, setPerfil] = useState(null);
   const [form, setForm] = useState({ barbero: '', fecha: '', hora: '' });
 
   useEffect(() => { cargarDatos(); }, []);
 
   const cargarDatos = async () => {
-    try {
-      const [citasRes, barberosRes] = await Promise.all([
-        api.get('/citas/'),
-        api.get('/barberos/'),
-      ]);
-      setCitas(citasRes.data);
-      setBarberos(barberosRes.data);
-    } catch (err) {
-      setError('Error al cargar los datos.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const [citasRes, barberosRes, perfilRes] = await Promise.all([
+      api.get('/citas/'),
+      api.get('/barberos/'),
+      api.get('/usuarios/perfil/'),
+    ]);
+    setCitas(citasRes.data);
+    setBarberos(barberosRes.data);
+    setPerfil(perfilRes.data);
+  } catch (err) {
+    setError('Error al cargar los datos.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAgendar = async (e) => {
     e.preventDefault();
@@ -73,15 +76,23 @@ export default function Citas() {
     <div style={s.page}>
       {/* Navbar */}
       <nav style={s.navbar}>
-        <div style={s.navBrand}>
-          <div style={s.navLogo}>✂</div>
-          <span style={s.navTitle}>Barber Ecci Cut</span>
+  <div style={s.navBrand}>
+    <div style={s.navLogo}>✂</div>
+    <span style={s.navTitle}>Barber Ecci Cut</span>
+  </div>
+  <div style={s.navActions}>
+    {perfil && (
+      <div style={s.navUser}>
+        <div style={s.navAvatar}>
+          {perfil.username.charAt(0).toUpperCase()}
         </div>
-        <div style={s.navActions}>
-          <button style={s.btnNueva} onClick={() => setMostrarForm(true)}>+ Nueva cita</button>
-          <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
-        </div>
-      </nav>
+        <span style={s.navUsername}>Hola, {perfil.username}</span>
+      </div>
+    )}
+    <button style={s.btnNueva} onClick={() => setMostrarForm(true)}>+ Nueva cita</button>
+    <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
+  </div>
+</nav>
 
       <div style={s.contenido}>
         <h2 style={s.titulo}>Mis citas</h2>
@@ -201,6 +212,31 @@ const s = {
     display: 'flex',
     gap: '12px',
   },
+
+  navUser: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+},
+navAvatar: {
+  width: '34px',
+  height: '34px',
+  background: 'rgba(255,255,255,0.25)',
+  border: '1px solid rgba(255,255,255,0.4)',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '14px',
+  fontWeight: '800',
+  color: '#fff',
+},
+navUsername: {
+  color: 'rgba(255,255,255,0.9)',
+  fontSize: '14px',
+  fontWeight: '700',
+},
+
   btnNueva: {
     padding: '9px 20px',
     background: 'rgba(255,255,255,0.9)',
