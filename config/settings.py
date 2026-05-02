@@ -81,12 +81,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'CUDDY',
-        'USER': 'root',
-        'PASSWORD': 'PanchakunMysql@123',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'mssql',
+        'NAME': 'barber_ecci_cut',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': 'DANIEL',
+        'PORT': '',
+        'OPTIONS': {
+        'driver': 'ODBC Driver 18 for SQL Server',
+        'extra_params': 'Trusted_Connection=yes;TrustServerCertificate=yes',
+        },
     }
 }
 
@@ -123,9 +127,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-co'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -141,3 +145,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Media files (fotos de barberos)
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

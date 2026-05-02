@@ -3,14 +3,19 @@ from .models import Barbero, Horario
 from .serializers import BarberoSerializer, HorarioSerializer
 from usuarios.permissions import EsAdmin, EsAdminOBarbero
 
+
 class BarberoViewSet(viewsets.ModelViewSet):
     queryset = Barbero.objects.all()
     serializer_class = BarberoSerializer
+
+    def get_serializer_context(self):
+        return {**super().get_serializer_context(), 'request': self.request}
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [EsAdmin()]
         return [permissions.IsAuthenticated()]
+
 
 class HorarioViewSet(viewsets.ModelViewSet):
     queryset = Horario.objects.all()

@@ -4,7 +4,7 @@ import { registro } from '../services/auth';
 
 export default function Registro() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', email: '', password: '', rol: 'cliente' });
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -13,11 +13,16 @@ export default function Registro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       await registro(form);
       navigate('/login');
     } catch (err) {
-      setError('Error al registrarse. Verifica los datos.');
+      const data = err.response?.data;
+      if (data?.username) setError('Ese nombre de usuario ya está en uso.');
+      else if (data?.email) setError('Ese correo electrónico ya está registrado.');
+      else if (data?.password) setError('La contraseña no cumple los requisitos mínimos.');
+      else setError('Error al registrarse. Verifica los datos.');
     } finally {
       setLoading(false);
     }
@@ -43,17 +48,45 @@ export default function Registro() {
           <form onSubmit={handleSubmit} style={s.form}>
             <div style={s.inputGroup}>
               <label style={s.label}>Usuario</label>
-              <input style={s.input} type="text" name="username" placeholder="Ej: juan123" value={form.username} onChange={handleChange} required />
+              <input
+                style={s.input}
+                type="text"
+                name="username"
+                placeholder="Ej: juan123"
+                value={form.username}
+                onChange={handleChange}
+                required
+              />
             </div>
             <div style={s.inputGroup}>
               <label style={s.label}>Correo electrónico</label>
-              <input style={s.input} type="email" name="email" placeholder="tucorreo@gmail.com" value={form.email} onChange={handleChange} required />
+              <input
+                style={s.input}
+                type="email"
+                name="email"
+                placeholder="tucorreo@gmail.com"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
             </div>
             <div style={s.inputGroup}>
               <label style={s.label}>Contraseña</label>
-              <input style={s.input} type="password" name="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={handleChange} required />
+              <input
+                style={s.input}
+                type="password"
+                name="password"
+                placeholder="Mínimo 8 caracteres"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
             </div>
-            <button style={{...s.boton, opacity: loading ? 0.7 : 1}} type="submit" disabled={loading}>
+            <button
+              style={{ ...s.boton, opacity: loading ? 0.7 : 1 }}
+              type="submit"
+              disabled={loading}
+            >
               {loading ? 'Registrando...' : 'Crear cuenta'}
             </button>
           </form>
@@ -88,10 +121,7 @@ const s = {
     justifyContent: 'center',
     padding: '40px',
   },
-  brand: {
-    textAlign: 'center',
-    color: '#fff',
-  },
+  brand: { textAlign: 'center', color: '#fff' },
   logoCircle: {
     width: '90px',
     height: '90px',
@@ -155,16 +185,8 @@ const s = {
     color: '#ffcccc',
     fontSize: '14px',
   },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '18px',
-  },
-  inputGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
+  form: { display: 'flex', flexDirection: 'column', gap: '18px' },
+  inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
   label: {
     fontSize: '13px',
     fontWeight: '700',
@@ -205,20 +227,12 @@ const s = {
     background: 'rgba(255,255,255,0.2)',
     display: 'block',
   },
-  dividerText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: '13px',
-  },
+  dividerText: { color: 'rgba(255,255,255,0.5)', fontSize: '13px' },
   footerText: {
     textAlign: 'center',
     fontSize: '14px',
     color: 'rgba(255,255,255,0.7)',
     margin: 0,
   },
-  link: {
-    color: '#fff',
-    fontWeight: '700',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-  },
+  link: { color: '#fff', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' },
 };
