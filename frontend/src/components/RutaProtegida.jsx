@@ -21,7 +21,6 @@ export function RutaAdmin({ children }) {
 }
 
 
-
 export function RutaPublica({ children }) {
   const { usuario, loading } = useAuth();
   if (loading) return <p style={{ textAlign: 'center', marginTop: '40px' }}>Cargando...</p>;
