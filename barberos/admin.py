@@ -4,8 +4,8 @@ from .models import Barbero, Horario
 
 @admin.register(Barbero)
 class BarberoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'especialidad')
-    fields = ('nombre', 'especialidad', 'descripcion', 'foto')
+    list_display = ('nombre', 'especialidad', 'usuario')
+    fields = ('usuario', 'nombre', 'especialidad', 'descripcion', 'foto')
 
 
 @admin.register(Horario)

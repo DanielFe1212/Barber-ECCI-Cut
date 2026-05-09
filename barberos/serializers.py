@@ -14,7 +14,7 @@ class BarberoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Barbero
-        fields = ['id', 'nombre', 'especialidad', 'descripcion', 'foto', 'foto_url', 'horarios']
+        fields = ['id', 'usuario', 'nombre', 'especialidad', 'descripcion', 'foto', 'foto_url', 'horarios']
         extra_kwargs = {'foto': {'write_only': True}}
 
     def get_foto_url(self, obj):

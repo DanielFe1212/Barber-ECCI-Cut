@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Cita
 from .serializers import CitaSerializer
 from usuarios.permissions import EsAdmin, EsAdminOCliente
+from auditoria.utils import registrar
 
 
 class CitaViewSet(viewsets.ModelViewSet):
@@ -21,7 +22,6 @@ class CitaViewSet(viewsets.ModelViewSet):
         if user.rol == 'admin':
             return Cita.objects.all()
         if user.rol == 'barbero':
-            # Usa la vinculación real Usuario → Barbero
             try:
                 return Cita.objects.filter(barbero=user.barbero)
             except Exception:
@@ -29,7 +29,18 @@ class CitaViewSet(viewsets.ModelViewSet):
         return Cita.objects.filter(usuario=user)
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        cita = serializer.save(usuario=self.request.user)
+        registrar(
+            self.request.user, 'crear', 'cita', cita.id,
+            f'Cita con barbero #{cita.barbero_id} el {cita.fecha} a las {cita.hora}'
+        )
+
+    def perform_destroy(self, instance):
+        registrar(
+            self.request.user, 'eliminar', 'cita', instance.id,
+            f'Cita del {instance.fecha} eliminada'
+        )
+        instance.delete()
 
     @action(detail=True, methods=['post'])
     def cancelar(self, request, pk=None):
@@ -40,8 +51,8 @@ class CitaViewSet(viewsets.ModelViewSet):
             return Response({'error': 'La cita ya está cancelada.'}, status=status.HTTP_400_BAD_REQUEST)
         cita.estado = 'cancelada'
         cita.save()
+        registrar(request.user, 'cancelar', 'cita', cita.id, f'Cita del {cita.fecha} cancelada')
         return Response({'mensaje': 'Cita cancelada correctamente.'})
-
 
     @action(detail=True, methods=['patch'])
     def completar(self, request, pk=None):
@@ -52,4 +63,5 @@ class CitaViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Solo se pueden completar citas pendientes.'}, status=status.HTTP_400_BAD_REQUEST)
         cita.estado = 'completada'
         cita.save()
+        registrar(request.user, 'completar', 'cita', cita.id, f'Cita del {cita.fecha} completada')
         return Response({'mensaje': 'Cita marcada como completada.'})
