@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useToast from '../hooks/useToast';
 import Toast from '../components/Toast';
+import AvatarPerfil from '../components/AvatarPerfil';
+import { useAuth } from '../context/AuthContext';
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { usuario, actualizarPerfil } = useAuth();
+  const [perfil, setPerfil] = useState(null);
   const [seccion,  setSeccion]  = useState('citas');
   const [citas,    setCitas]    = useState([]);
   const [barberos, setBarberos] = useState([]);
@@ -29,13 +33,15 @@ export default function Admin() {
 
   const cargarDatos = async () => {
     try {
-      const [citasRes, barberosRes, usuariosRes, auditoriaRes] = await Promise.all([
+      const [citasRes, barberosRes, usuariosRes, auditoriaRes, perfilRes] = await Promise.all([
         api.get('/citas/'),
         api.get('/barberos/'),
         api.get('/usuarios/'),
         api.get('/auditoria/'),
+        api.get('/usuarios/perfil/'),
       ]);
       setCitas(citasRes.data);
+      setPerfil(perfilRes.data);
       setBarberos(barberosRes.data);
       setUsuarios(usuariosRes.data);
       setAuditoria(auditoriaRes.data);
@@ -119,10 +125,10 @@ export default function Admin() {
   });
 
   const handleLogout = async () => {
-    try { await api.post('/usuarios/logout/', { refresh: localStorage.getItem('refresh') }); } catch { /* continuar */ }
+    try { await api.post('/usuarios/logout/', { refresh: sessionStorage.getItem('refresh') }); } catch { /* continuar */ }
     finally {
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
       navigate('/login');
     }
   };
@@ -165,6 +171,7 @@ export default function Admin() {
           <div style={s.navLogo}>✂</div>
           <span style={s.navTitle}>Barber Ecci Cut</span>
           <span style={s.adminBadge}>Admin</span>
+          {perfil && <AvatarPerfil perfil={perfil} onActualizar={(d) => { setPerfil(d); actualizarPerfil(d); }} size={34} />}
         </div>
         <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
       </nav>

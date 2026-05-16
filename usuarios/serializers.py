@@ -5,9 +5,19 @@ from .models import Usuario
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
+    foto_perfil_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Usuario
-        fields = ['id', 'username', 'email', 'rol']
+        fields = ['id', 'username', 'email', 'rol', 'foto_perfil_url']
+
+    def get_foto_perfil_url(self, obj):
+        if obj.foto_perfil:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.foto_perfil.url)
+            return obj.foto_perfil.url
+        return None
 
 
 class RegistroSerializer(serializers.ModelSerializer):

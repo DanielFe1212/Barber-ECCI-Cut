@@ -1,6 +1,6 @@
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
 
 class Usuario(AbstractUser):
     ROL_CHOICES = [
@@ -9,5 +9,4 @@ class Usuario(AbstractUser):
         ('barbero', 'Barbero'),
     ]
     rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='cliente')
-
-# Create your models here.
+    foto_perfil = models.ImageField(upload_to='perfiles/', blank=True, null=True)

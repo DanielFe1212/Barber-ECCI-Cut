@@ -34,8 +34,36 @@ class PerfilView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        serializer = UsuarioSerializer(request.user)
+        serializer = UsuarioSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+
+class FotoPerfilView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """Subir o reemplazar foto de perfil."""
+        foto = request.FILES.get('foto')
+        if not foto:
+            return Response({'error': 'No se envió ninguna foto.'}, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        if user.foto_perfil:
+            user.foto_perfil.delete(save=False)
+        user.foto_perfil = foto
+        user.save()
+        url = request.build_absolute_uri(user.foto_perfil.url)
+        registrar(user, 'editar', 'usuario', user.id, 'Foto de perfil actualizada')
+        return Response({'foto_perfil_url': url})
+
+    def delete(self, request):
+        """Quitar foto de perfil."""
+        user = request.user
+        if user.foto_perfil:
+            user.foto_perfil.delete(save=False)
+            user.foto_perfil = None
+            user.save()
+        registrar(user, 'editar', 'usuario', user.id, 'Foto de perfil eliminada')
+        return Response({'mensaje': 'Foto de perfil eliminada.'})
 
 
 class LogoutView(APIView):
@@ -56,6 +84,9 @@ class ListaUsuariosView(generics.ListAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [EsAdmin]
+
+    def get_serializer_context(self):
+        return {**super().get_serializer_context(), 'request': self.request}
 
 
 class EliminarUsuarioView(generics.DestroyAPIView):

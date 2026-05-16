@@ -1,18 +1,29 @@
 import api from './api';
 
-export const login = async (datos) => {
-  const response = await api.post('/usuarios/login/', datos);
-  localStorage.setItem('access', response.data.access);
-  localStorage.setItem('refresh', response.data.refresh);
-  return response.data;
+// Usamos sessionStorage para que cada pestaña tenga su propia sesión
+const store = sessionStorage;
+
+export const login = async ({ username, password }) => {
+  const res = await api.post('/usuarios/login/', { username, password });
+  store.setItem('access',  res.data.access);
+  store.setItem('refresh', res.data.refresh);
+  return res.data;
 };
 
-export const registro = async (datos) => {
-  const response = await api.post('/usuarios/registro/', datos);
-  return response.data;
+export const registro = async (data) => {
+  const res = await api.post('/usuarios/registro/', data);
+  return res.data;
 };
 
-export const logout = () => {
-  localStorage.removeItem('access');
-  localStorage.removeItem('refresh');
+export const logout = async () => {
+  try {
+    const refresh = store.getItem('refresh');
+    if (refresh) await api.post('/usuarios/logout/', { refresh });
+  } catch { /* continuar */ } finally {
+    store.removeItem('access');
+    store.removeItem('refresh');
+  }
 };
+
+export const getAccess  = () => store.getItem('access');
+export const getRefresh = () => store.getItem('refresh');

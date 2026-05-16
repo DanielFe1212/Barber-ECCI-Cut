@@ -4,6 +4,8 @@ import api from '../services/api';
 import useToast from '../hooks/useToast';
 import Toast from '../components/Toast';
 import TimePicker from '../components/TimePicker';
+import AvatarPerfil from '../components/AvatarPerfil';
+import { useAuth } from '../context/AuthContext';
 
 // Duraciones: 30 min a 120 min, intervalos de 10
 const DURACIONES = Array.from({ length: 10 }, (_, i) => {
@@ -33,6 +35,7 @@ function generarTurnos(horaInicio, horaFin, duracionMin) {
 
 export default function Barbero() {
   const navigate = useNavigate();
+  const { actualizarPerfil } = useAuth();
   const [citas,      setCitas]      = useState([]);
   const [horarios,   setHorarios]   = useState([]);
   const [perfil,     setPerfil]     = useState(null);
@@ -125,11 +128,11 @@ export default function Barbero() {
 
   const handleLogout = async () => {
     try {
-      const refresh = localStorage.getItem('refresh');
+      const refresh = sessionStorage.getItem('refresh');
       await api.post('/usuarios/logout/', { refresh });
     } catch { /* continuar */ } finally {
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
       navigate('/login');
     }
   };
@@ -156,7 +159,12 @@ export default function Barbero() {
           <span style={s.barberoBadge}>Barbero</span>
         </div>
         <div style={s.navRight}>
-          {perfil && <span style={s.navUser}>👤 {perfil.username}</span>}
+          {perfil && (
+            <div style={s.navUserWrap}>
+              <AvatarPerfil perfil={perfil} onActualizar={(d) => { setPerfil(d); actualizarPerfil(d); }} size={34} />
+              <span style={s.navUser}>{perfil.username}</span>
+            </div>
+          )}
           <button style={s.btnLogout} onClick={handleLogout}>Cerrar sesión</button>
         </div>
       </nav>
@@ -398,8 +406,9 @@ const s = {
     background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.35)',
     color: '#fff', fontSize: '11px', fontWeight: '700', padding: '3px 12px', borderRadius: '20px',
   },
-  navRight:  { display: 'flex', alignItems: 'center', gap: '16px' },
-  navUser:   { color: 'rgba(255,255,255,0.8)', fontSize: '14px', fontWeight: '600' },
+  navRight:    { display: 'flex', alignItems: 'center', gap: '16px' },
+  navUserWrap: { display: 'flex', alignItems: 'center', gap: '8px' },
+  navUser:     { color: 'rgba(255,255,255,0.8)', fontSize: '14px', fontWeight: '600' },
   btnLogout: {
     padding: '9px 20px', background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)',
     border: '1px solid rgba(255,255,255,0.25)', borderRadius: '20px', fontSize: '14px',

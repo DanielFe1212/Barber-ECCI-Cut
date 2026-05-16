@@ -1,25 +1,21 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: 'http://localhost:8000/api',
 });
 
-// Agregar token en cada petición
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  const token = sessionStorage.getItem('access');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Si el token expiró, limpiar sesión y redirigir al login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
       window.location.href = '/login';
     }
     return Promise.reject(error);

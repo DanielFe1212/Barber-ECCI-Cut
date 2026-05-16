@@ -33,6 +33,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.InvalidarSesionesAntiguas',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -56,7 +57,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',  
+        'ENGINE': 'mssql',
         'NAME': 'barber_ecci_cut',
         'USER': '',
         'PASSWORD': '',
@@ -99,3 +100,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Sesión admin Django
+SESSION_COOKIE_AGE = 300
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

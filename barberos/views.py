@@ -19,7 +19,7 @@ class BarberoViewSet(viewsets.ModelViewSet):
 
 
 class HorarioViewSet(viewsets.ModelViewSet):
-    queryset = Horario.objects.all()   # necesario para que el router infiera el basename
+    queryset = Horario.objects.all()
     serializer_class = HorarioSerializer
 
     def get_permissions(self):
@@ -31,10 +31,17 @@ class HorarioViewSet(viewsets.ModelViewSet):
         queryset = Horario.objects.all()
         barbero_id = self.request.query_params.get('barbero')
         disponible = self.request.query_params.get('disponible')
+
         if barbero_id:
             queryset = queryset.filter(barbero_id=barbero_id)
+
+        # Convertir string a booleano correctamente
         if disponible is not None:
-            queryset = queryset.filter(disponible=disponible)
+            if disponible.lower() in ('true', '1'):
+                queryset = queryset.filter(disponible=True)
+            elif disponible.lower() in ('false', '0'):
+                queryset = queryset.filter(disponible=False)
+
         return queryset
 
     def _verificar_propietario(self, horario):
